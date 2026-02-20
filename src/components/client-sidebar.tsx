@@ -37,7 +37,7 @@ export function ClientSidebar() {
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
-        router.push('/admin/login')
+        router.push('/login')
     }
 
     if (!mounted || loading) return null
@@ -85,7 +85,7 @@ export function ClientSidebar() {
             <div className="p-4 border-t">
                 <div className="mb-4 px-2">
                     <p className="text-xs text-slate-500 font-medium">Signed in as</p>
-                    <p className="text-sm font-medium truncate" title={profile?.email}>{profile?.email}</p>
+                    <p className="text-sm font-medium truncate" title={profile?.email ?? undefined}>{profile?.email}</p>
                 </div>
                 <Button
                     variant="ghost"
