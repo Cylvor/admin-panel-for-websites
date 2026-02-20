@@ -25,6 +25,20 @@ export default function AdminLayout({
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) {
                 router.push('/admin/login')
+            } else {
+                // Check for profile to get role
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single()
+
+                if (!profile) {
+                    // Handle edge case where auth exists but profile doesn't (shouldn't happen with triggers)
+                } else if (profile.role !== 'super_admin') {
+                    // Verify if the user is strict admin. If not, redirect to dashboard or 403
+                    router.push('/dashboard')
+                }
             }
             setLoading(false)
         }

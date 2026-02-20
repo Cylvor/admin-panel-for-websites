@@ -7,11 +7,12 @@ import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Separator } from '@/components/ui/separator'
 
 export default function AdminSettings() {
     const [email, setEmail] = useState('')
     const [newEmail, setNewEmail] = useState('')
+    const [role, setRole] = useState('')
+    const [subscription, setSubscription] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [loading, setLoading] = useState(false)
@@ -23,6 +24,17 @@ export default function AdminSettings() {
             const { data: { user } } = await supabase.auth.getUser()
             if (user?.email) {
                 setEmail(user.email)
+
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single()
+
+                if (profile) {
+                    setRole(profile.role)
+                    setSubscription(profile.subscription_status)
+                }
             }
         }
         fetchUser()
@@ -86,8 +98,31 @@ export default function AdminSettings() {
 
             <Card>
                 <CardHeader>
+                    <CardTitle>Account Overview</CardTitle>
+                    <CardDescription>Your current account status and privileges.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Role</Label>
+                            <div className="px-3 py-2 border rounded-md bg-slate-50 text-sm capitalize">
+                                {role?.replace('_', ' ') || 'Loading...'}
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Subscription</Label>
+                            <div className="px-3 py-2 border rounded-md bg-slate-50 text-sm capitalize">
+                                {subscription || 'Loading...'}
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
                     <CardTitle>Profile Information</CardTitle>
-                    <CardDescription>Update your admin account email address.</CardDescription>
+                    <CardDescription>Update your account email address.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleUpdateEmail} className="space-y-4">
@@ -102,7 +137,7 @@ export default function AdminSettings() {
                                 type="email"
                                 value={newEmail}
                                 onChange={(e) => setNewEmail(e.target.value)}
-                                placeholder="new.admin@example.com"
+                                placeholder="new.email@example.com"
                                 required
                             />
                         </div>
