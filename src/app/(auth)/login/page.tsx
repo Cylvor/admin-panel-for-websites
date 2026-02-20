@@ -5,11 +5,11 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
-export default function AdminLogin() {
+export default function LoginPage() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
@@ -22,7 +22,7 @@ export default function AdminLogin() {
         setError(null)
 
         try {
-            const { error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             })
@@ -31,7 +31,19 @@ export default function AdminLogin() {
                 throw error
             }
 
-            router.push('/admin/dashboard')
+            // Fetch profile to determine redirect target
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', data.user.id)
+                .single()
+
+            // Full page navigation so middleware picks up the new auth cookies
+            if (profile?.role === 'super_admin') {
+                window.location.href = '/admin/dashboard'
+            } else {
+                window.location.href = '/dashboard'
+            }
         } catch (err: any) {
             setError(err.message)
         } finally {
@@ -43,7 +55,7 @@ export default function AdminLogin() {
         <div className="flex items-center justify-center min-h-screen bg-slate-50">
             <Card className="w-full max-w-md">
                 <CardHeader>
-                    <CardTitle className="text-2xl text-center">Admin Login</CardTitle>
+                    <CardTitle className="text-2xl text-center">Login</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleLogin} className="space-y-4">
@@ -52,7 +64,7 @@ export default function AdminLogin() {
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="admin@example.com"
+                                placeholder="you@example.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
