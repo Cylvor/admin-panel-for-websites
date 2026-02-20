@@ -3,22 +3,37 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Settings, LogOut, Globe, Users } from 'lucide-react'
+import { LayoutDashboard, Settings, LogOut, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/lib/auth'
 import { useEffect, useState } from 'react'
 
-export function AdminSidebar() {
+export function ClientSidebar() {
     const pathname = usePathname()
     const router = useRouter()
     const { profile, loading } = useUser()
     const [mounted, setMounted] = useState(false)
+    const [clientSiteId, setClientSiteId] = useState<string | null>(null)
 
     useEffect(() => {
         setMounted(true)
-    }, [])
+
+        async function fetchClientSite() {
+            if (profile?.role === 'client') {
+                const { data } = await supabase
+                    .from('sites')
+                    .select('id')
+                    .eq('owner_id', profile.id)
+                    .single()
+                if (data) setClientSiteId(data.id)
+            }
+        }
+        if (profile) fetchClientSite()
+
+    }, [profile])
+
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
@@ -30,22 +45,17 @@ export function AdminSidebar() {
     const sidebarItems = [
         {
             title: 'Overview',
-            href: '/admin/dashboard',
+            href: '/dashboard',
             icon: LayoutDashboard,
         },
         {
-            title: 'All Sites',
-            href: '/admin/sites',
+            title: 'My Site',
+            href: clientSiteId ? `/dashboard/site/editor` : '#', // We will route this correctly
             icon: Globe,
         },
         {
-            title: 'Users',
-            href: '/admin/users',
-            icon: Users,
-        },
-        {
             title: 'Settings',
-            href: '/admin/settings',
+            href: '/dashboard/settings',
             icon: Settings,
         },
     ]
@@ -54,7 +64,7 @@ export function AdminSidebar() {
         <div className="flex flex-col h-full border-r bg-slate-50/40 w-64">
             <div className="p-6">
                 <h2 className="text-xl font-bold">
-                    Super Admin
+                    Client Panel
                 </h2>
             </div>
             <div className="flex-1 px-4 py-2 space-y-2">
